@@ -156,6 +156,11 @@ legend{padding:0;margin-bottom:2px}
 .entry-date{font-family:var(--body);font-size:.95rem;font-weight:700;color:var(--ink2)}
 .entry-frog{font-family:var(--display);font-weight:700;font-size:1.2rem;line-height:1.3}
 .entry{padding:16px 18px}
+.entry-row{display:flex;gap:14px;align-items:flex-start}
+.entry-main{min-width:0;flex:1}
+.entry-main > *+*{margin-top:8px}
+.entry-toad{width:64px;height:56px;flex:none;margin-top:2px}
+.missed{border-color:var(--primary);border-width:2px}
 .note{white-space:pre-wrap;padding:12px 14px;border-left:4px solid var(--hair);background:var(--bg);border-radius:6px}
 
 /* badges */
@@ -196,6 +201,12 @@ footer{padding-block:20px 32px;color:var(--ink2);font-size:.95rem;border-top:1px
 <body>
 
 <a class="skip" href="#main">Skip to main content</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <mask id="toadBite" maskUnits="userSpaceOnUse" x="0" y="0" width="60" height="52">
+    <rect width="60" height="52" fill="#fff"/>
+    <circle cx="49" cy="20.5" r="7.5" fill="#000"/><circle cx="52.5" cy="29.5" r="8" fill="#000"/><circle cx="52" cy="39" r="7" fill="#000"/>
+  </mask>
+</defs></svg>
 
 <header>
   <div class="band">
@@ -209,7 +220,7 @@ footer{padding-block:20px 32px;color:var(--ink2);font-size:.95rem;border-top:1px
         <p class="brand-name" id="appName">Eat the Frog!</p>
         <p class="brand-org" id="orgName" hidden></p>
       </div>
-      <svg class="toad" viewBox="0 0 60 52" aria-hidden="true" focusable="false">
+      <svg class="toad" id="headerToad" viewBox="0 0 60 52" aria-hidden="true" focusable="false">
           <ellipse cx="30" cy="47" rx="28" ry="4.6" fill="#ECE9DE"/>
           <ellipse cx="30" cy="46.6" rx="20" ry="2.6" fill="#CFCABA"/>
           <g class="toad-body">
@@ -487,6 +498,16 @@ function streakStrip(s){
     '<li>Best: <strong>' + pl(s.best, 'day') + '</strong></li>' +
     '<li>Finished: <strong>' + s.finished + '</strong></li></ul>';
 }
+var TOAD_BODY = '<ellipse cx="13" cy="40" rx="7" ry="5" fill="#6B7A33" stroke="#38431A" stroke-width="1.4"/><ellipse cx="49" cy="40" rx="7" ry="5" fill="#6B7A33" stroke="#38431A" stroke-width="1.4"/><path d="M10 38 C10 24 18 19 30 19 C42 19 51 24 51 38 C51 43 44 45 30 45 C17 45 10 43 10 38Z" fill="#7A8A3A" stroke="#38431A" stroke-width="1.5"/><circle cx="22" cy="20" r="6.4" fill="#7A8A3A" stroke="#38431A" stroke-width="1.5"/><circle cx="38" cy="20" r="6.4" fill="#7A8A3A" stroke="#38431A" stroke-width="1.5"/><circle cx="22" cy="20" r="4.3" fill="#E6C94A"/><circle cx="38" cy="20" r="4.3" fill="#E6C94A"/><ellipse cx="20" cy="19.2" rx="2.5" ry="1.4" fill="#141414"/><ellipse cx="36" cy="19.2" rx="2.5" ry="1.4" fill="#141414"/><path d="M18 32 q3 -2 6 0 t6 0 t6 0 t6 0" fill="none" stroke="#38431A" stroke-width="1.6" stroke-linecap="round"/><g fill="#A7B456"><circle cx="15.5" cy="29" r="1.7"/><circle cx="26" cy="26.5" r="1.5"/><circle cx="35" cy="26" r="1.3"/><circle cx="45.5" cy="29" r="1.8"/><circle cx="21" cy="38" r="1.6"/><circle cx="31" cy="39.5" r="1.9"/><circle cx="41" cy="37.5" r="1.5"/></g><ellipse cx="22" cy="45.2" rx="4.5" ry="2" fill="#6B7A33" stroke="#38431A" stroke-width="1.2"/><ellipse cx="38" cy="45.2" rx="4.5" ry="2" fill="#6B7A33" stroke="#38431A" stroke-width="1.2"/>';
+function toadIcon(e){
+  var plate = '<ellipse cx="30" cy="47" rx="28" ry="4.6" fill="#ECE9DE" stroke="#8A8676" stroke-width="0.8"/><ellipse cx="30" cy="46.6" rx="20" ry="2.6" fill="#CFCABA"/>';
+  var body = '';
+  if (e.progress === 'done') body = '<g fill="#6B7A33"><circle cx="24" cy="45.6" r="1"/><circle cx="33" cy="46.4" r="0.8"/><circle cx="38" cy="45.4" r="0.9"/></g>';
+  else if (e.progress === 'some') body = '<g mask="url(#toadBite)">' + TOAD_BODY + '</g>';
+  else body = '<g>' + TOAD_BODY + '</g>';
+  return '<svg class="entry-toad" viewBox="0 0 60 52" aria-hidden="true" focusable="false">' + plate + body + '</svg>';
+}
+function yesterdayKey(){ var d = new Date(); d.setDate(d.getDate() - 1); return keyOf(d); }
 function chipsFor(e){
   var h = '';
   if (e.prioritized === false && e.progress === 'none') return '<li class="chip warn">' + ICON.cross + 'Procrastinated</li>';
@@ -530,6 +551,13 @@ function viewToday(){
   }
   h += streakStrip(s) + '</section>';
 
+  var yk = yesterdayKey(), ye = entries[yk];
+  if (isToday && !editing && ye && ye.frog && !isChecked(ye)) {
+    h += '<section class="card missed" aria-labelledby="missedH"><h2 id="missedH">Finish yesterday\'s check-in</h2>';
+    h += '<p>You did not check in for yesterday\'s frog: <strong>' + esc(ye.frog) + '</strong>. How did it go?</p>';
+    h += '<p><button type="button" class="btn small" data-action="edit-entry" data-date="' + yk + '">Check in for yesterday</button></p></section>';
+  }
+
   var due = sinceBackup(s);
   if (isToday && !editing && due >= BK_EVERY) {
     h += '<section class="card nudge" aria-labelledby="nudgeH"><h2 id="nudgeH">Back up your journal</h2>';
@@ -566,13 +594,15 @@ function viewJournal(){
   h += '<ol class="entries">';
   keys.forEach(function(k){
     var e = entries[k], d = fmtDate(k);
-    h += '<li class="card entry"><h2 class="entry-date">' + esc(d) + '</h2><p class="entry-frog">' + esc(e.frog) + '</p><ul class="chips">';
+    h += '<li class="card entry"><div class="entry-row">' + toadIcon(e) + '<div class="entry-main"><h2 class="entry-date">' + esc(d) + '</h2><p class="entry-frog">' + esc(e.frog) + '</p><ul class="chips">';
     h += chipsFor(e);
-    h += '</ul>';
+    h += '</ul></div></div><div class="row">';
+    h += '<button type="button" class="btn alt small" data-action="edit-entry" data-date="' + k + '" aria-label="' + (isChecked(e) ? 'Edit' : 'Check in for') + ' ' + esc(d) + '">' + (isChecked(e) ? 'Edit' : 'Check in') + '</button>';
     if (e.note) {
-      h += '<button type="button" class="btn alt small" data-action="toggle-note" aria-expanded="false" aria-controls="note-' + k + '">Show notes</button>' +
-        '<p class="note" id="note-' + k + '" hidden>' + esc(e.note) + '</p>';
+      h += '<button type="button" class="btn alt small" data-action="toggle-note" aria-expanded="false" aria-controls="note-' + k + '">Show notes</button>';
     }
+    h += '</div>';
+    if (e.note) h += '<p class="note" id="note-' + k + '" hidden>' + esc(e.note) + '</p>';
     h += '</li>';
   });
   h += '</ol>';
@@ -632,7 +662,9 @@ function render(focusSel){
   });
   $('#storageNote').hidden = storageOk;
   var te = entries[todayKey()];
-  document.querySelector('.band').classList.toggle('eaten', !!(te && te.prioritized === true));
+  document.querySelector('.band').classList.toggle('eaten', !!(te && te.progress === 'done'));
+  var tb = document.querySelector('#headerToad .toad-body');
+  if (tb) { if (te && te.progress === 'some') tb.setAttribute('mask', 'url(#toadBite)'); else tb.removeAttribute('mask'); }
   document.title = TITLES[state.view] + ' - ' + BRAND.appName;
   if (state.view === 'help') { var bb = $('#backupBox'); if (bb) bb.value = backupText(); }
   if (focusSel) { var el = $(focusSel); if (el) el.focus(); }
@@ -653,6 +685,13 @@ document.addEventListener('click', function(ev){
   if (a === 'nav') { setStatus(''); if (t.dataset.view === 'today') { state.editDate = null; state.editingFrog = false; } go(t.dataset.view); }
   else if (a === 'edit-frog') { state.editingFrog = true; state.checkinOpen = false; render('#frogInput'); }
   else if (a === 'cancel-frog') { state.editingFrog = false; render('#frogH'); }
+  else if (a === 'edit-entry') {
+    var ee = entries[d];
+    state.view = 'today'; state.editDate = d === todayKey() ? null : d; state.editingFrog = false; state.confirmDelete = null;
+    state.checkinOpen = !!(ee && !isChecked(ee));
+    render(state.checkinOpen ? '#ciH' : '#viewHeading');
+    var ch = $('#ciH'); if (state.checkinOpen && ch) ch.scrollIntoView({ block: 'start' });
+  }
   else if (a === 'back-today') { state.editDate = null; state.editingFrog = false; render('#viewHeading'); }
   else if (a === 'save-ics') {
     if (IN_CLAUDE) { setStatus('Calendar files cannot be saved from this page. Use the Google Calendar button or your phone\'s Reminders app.'); return; }
@@ -735,7 +774,7 @@ function submitCheckin(f){
   var s = computeStats();
   state.checkinOpen = false;
   render('#ciSummary');
-  var msg = 'Check-in saved.';
+  var msg = key === todayKey() ? 'Check-in saved.' : 'Check-in saved for ' + fmtDate(key) + '.';
   if (e.prioritized && key === todayKey()) msg += ' Your streak is ' + pl(s.cur, 'day') + '.';
   if (after.length) msg += ' New badge' + (after.length > 1 ? 's' : '') + ' earned: ' + after.map(function(x){ return x.b.name; }).join(', ') + '. See the Badges tab.';
   if (!ok) msg += ' This browser is not saving data, so copy your backup from Help.';
