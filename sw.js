@@ -1,5 +1,5 @@
 /* Eat the Frog offline helper. Bump VERSION when you upload a new index.html. */
-var VERSION = 'eat-the-frog-v3';
+var VERSION = 'eat-the-frog-v4';
 var FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'];
 self.addEventListener('install', function(e){
   e.waitUntil(caches.open(VERSION).then(function(c){ return c.addAll(FILES); }).then(function(){ return self.skipWaiting(); }));
