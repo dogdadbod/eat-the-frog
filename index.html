@@ -71,6 +71,9 @@ p{margin:0}
 .toad{display:block;width:52px;height:45px;flex:none;align-self:flex-end}
 .band:not(.has-logo) .toad{display:none}
 .band.eaten .toad-body{display:none}
+.toad .bite{display:none;fill:#000}
+.band.bitten .toad .bite{display:inline}
+.entry-toad .bite{fill:var(--surface)}
 .brand-text{min-width:0;text-align:center}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .time-input{max-width:12rem}
@@ -201,12 +204,6 @@ footer{padding-block:20px 32px;color:var(--ink2);font-size:.95rem;border-top:1px
 <body>
 
 <a class="skip" href="#main">Skip to main content</a>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
-  <mask id="toadBite" maskUnits="userSpaceOnUse" x="0" y="0" width="60" height="52">
-    <rect width="60" height="52" fill="#fff"/>
-    <circle cx="49" cy="20.5" r="7.5" fill="#000"/><circle cx="52.5" cy="29.5" r="8" fill="#000"/><circle cx="52" cy="39" r="7" fill="#000"/>
-  </mask>
-</defs></svg>
 
 <header>
   <div class="band">
@@ -241,6 +238,7 @@ footer{padding-block:20px 32px;color:var(--ink2);font-size:.95rem;border-top:1px
           <ellipse cx="38" cy="45.2" rx="4.5" ry="2" fill="#6B7A33" stroke="#38431A" stroke-width="1.2"/>
           <path d="M49 9 C47.6 11.6 46.8 13 46.8 14.2 a2.2 2.2 0 0 0 4.4 0 C51.2 13 50.4 11.6 49 9Z" fill="#8FC7F0"/>
         </g>
+        <g class="bite"><circle cx="49" cy="20.5" r="7.5"/><circle cx="52.5" cy="29.5" r="8"/><circle cx="52" cy="37" r="5"/></g>
         </svg>
     </div>
   </div>
@@ -503,7 +501,7 @@ function toadIcon(e){
   var plate = '<ellipse cx="30" cy="47" rx="28" ry="4.6" fill="#ECE9DE" stroke="#8A8676" stroke-width="0.8"/><ellipse cx="30" cy="46.6" rx="20" ry="2.6" fill="#CFCABA"/>';
   var body = '';
   if (e.progress === 'done') body = '<g fill="#6B7A33"><circle cx="24" cy="45.6" r="1"/><circle cx="33" cy="46.4" r="0.8"/><circle cx="38" cy="45.4" r="0.9"/></g>';
-  else if (e.progress === 'some') body = '<g mask="url(#toadBite)">' + TOAD_BODY + '</g>';
+  else if (e.progress === 'some') body = '<g>' + TOAD_BODY + '</g>' + '<g class="bite"><circle cx="49" cy="20.5" r="7.5"/><circle cx="52.5" cy="29.5" r="8"/><circle cx="52" cy="37" r="5"/></g>';
   else body = '<g>' + TOAD_BODY + '</g>';
   return '<svg class="entry-toad" viewBox="0 0 60 52" aria-hidden="true" focusable="false">' + plate + body + '</svg>';
 }
@@ -663,8 +661,7 @@ function render(focusSel){
   $('#storageNote').hidden = storageOk;
   var te = entries[todayKey()];
   document.querySelector('.band').classList.toggle('eaten', !!(te && te.progress === 'done'));
-  var tb = document.querySelector('#headerToad .toad-body');
-  if (tb) { if (te && te.progress === 'some') tb.setAttribute('mask', 'url(#toadBite)'); else tb.removeAttribute('mask'); }
+  document.querySelector('.band').classList.toggle('bitten', !!(te && te.progress === 'some'));
   document.title = TITLES[state.view] + ' - ' + BRAND.appName;
   if (state.view === 'help') { var bb = $('#backupBox'); if (bb) bb.value = backupText(); }
   if (focusSel) { var el = $(focusSel); if (el) el.focus(); }
